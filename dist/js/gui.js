@@ -1752,7 +1752,6 @@ if (!jQuery) { throw new Error("GUI requires jQuery") }
                 .on("click","li", function (e) {
 
                     var targetClicked = e.target;
-                    console.log(e)
 
                     var nextPram = that._calIndicatorBtnIndex(targetClicked);
                     var curItemIndex = that._getCurrentItemIndex();
