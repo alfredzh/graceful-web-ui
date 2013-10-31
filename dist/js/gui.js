@@ -211,13 +211,28 @@ if (!jQuery) { throw new Error("GUI requires jQuery") }
                 $guiNav.addClass(option.styleName);
             }
 
-            $guiNav.find("li").mouseenter(function () {
+            /*$guiNav.find("li").mouseenter(function () {
                 var $navItem = $(this),
                     $$subMenu = $navItem.children("ul");
                 $$subMenu.css("left", (isVertical || !$navItem.parent().hasClass("gui-nav")) ? $navItem.width() : 0);
                 if (option.itemFadeIn) {
                     $$subMenu.css("opacity", 0).animate({opacity: 1}, option.animationDuration);
                 }
+            });*/
+
+            //$navItem.children("ul").css("left", (isVertical || !$navItem.parent().hasClass("gui-nav")) ? $navItem.width() : 0);
+
+            $guiNav.find("li").hover(function () {
+                var $navItem = $(this),
+                    $$subMenu = $navItem.children("ul");
+                $$subMenu.css("left", (isVertical || $(this).parent()[0] != $guiNav[0]) ? $navItem.outerWidth() : 0);
+                //if (option.itemFadeIn) {
+                    $$subMenu.stop(false,true).fadeIn(option.animationDuration);
+                //}
+            },function(){
+                var $navItem = $(this),
+                    $$subMenu = $navItem.children("ul");
+                $$subMenu.stop(false,true).fadeOut(option.animationDuration);
             });
         });
 
@@ -515,204 +530,140 @@ if (!jQuery) { throw new Error("GUI requires jQuery") }
 })(window);
 
 (function (window) {
-	"use strict";
+    "use strict";
 
-	var console = window.console,
-		$ = window.jQuery,
-		gui = window.gui,
-		old = $.fn.guiPopup;
+    var console = window.console,
+        $ = window.jQuery,
+        gui = window.gui,
+        old = $.fn.guiPopup;
 
+    //$.fn.guiPopup = function (option) {
+        //return this.each(function () {
+        //    $.fn.guiPopup.module._init(this, option);
+        //});
+    //}
 
+    var Module = function(obj ,option) {
+    	this._init(obj, option);
+    }
 
-	$.fn.guiPopup = function (option) {
+    //$.fn.guiPopup.module = {
+    Module.prototype = {
+        _init: function (obj, option) {
+            this.obj = obj;
+            this._initOptions(option);
+            this._appendPopup();
+            this._eventHandler();
+        },
+        _initOptions: function (option) {
+            this.defaults = $.extend({}, $.fn.guiPopup.defaults, option);
+        },
+        _appendPopup: function () {
+            if ($('.gui-popup').length === 0) {
+            	$('<div class="gui-popup">').appendTo('body');
+            }
+            this.popup = $('.gui-popup').append('<div class="gui-popup-window">' +
+                    '<div class="gui-popup-content">' +
+                    '<b class="gui-popup-closebtn"></b>' +
+                    '<div class="gui-popup-content-node"></div>' +
+                    '</div>' +
+                    '<div class="gui-popup-bg"></div>' +
+                    '</div>');
 
-		//console.log(this.module)
+            //}
+        },
+        _setAttributes: function () {
+        	var thatPopup = this.popup;
+            var $guiPopupWindow = $(thatPopup).find('.gui-popup-window'),
+            	$guiPopupContent = $(thatPopup).find('.gui-popup-content'),
+                $guiPopupCloseBtn = $(thatPopup).find('.gui-popup-closebtn'),
+                $guiPopupWindowBg = $(thatPopup).find('.gui-popup-bg');
 
-		//if (option == 'debug') {
-			//for debug
-			//return module;
-		//}
-		return this.each(function () {
-			$.fn.guiPopup.module._init(this, option);
-		});
-	}
+            var closeText = this.defaults.closeBtn.text;
 
-	$.fn.guiPopup.module = {
-			_init : function(obj,option){
-				this.obj = obj;
-				this._initOptions(option);
-				this._appendPopup();
-				this._eventHandler();
-			},
-			_initOptions: function (option) {
-				this.defaults = $.extend({}, $.fn.guiPopup.defaults, option);
-			},
-			_appendPopup : function(){
-				if($('.' + this.defaults.mainWrapperClass).length === 0){
-					$('<div class="' + this.defaults.mainWrapperClass + '">' +
-					'<div class="' + this.defaults.contentWrapperClass + '">' +
-					'<b class="' + this.defaults.closeBtnWrapperClass + '"></b>' +
-					'<div class="' + this.defaults.contentNodeClass + '"></div>' +
-					'</div>' +
-					'<div class="'+ this.defaults.mainBgClass +'"></div>' +
-					'</div>').appendTo(this.defaults.wrapper);
-				}
-			},
-			_setAttributes : function(){
-				$guiPopupWindow = $('.' + this.defaults.mainWrapperClass);
-				var $guiPopupContent = $('.' + this.defaults.contentWrapperClass),
-					$guiPopupCloseBtn = $('.' + this.defaults.closeBtnWrapperClass),
-					$guiPopupWindowBg = $('.' + this.defaults.mainBgClass);
+            var visibleBody = document.documentElement.clientHeight;
+            var bodyHeight = document.body.scrollHeight;//document.body.clientHeight;
+            var popWindowHeight = bodyHeight;
 
-				var visibleBody = document.documentElement.clientHeight;
-				var bodyHeight = document.body.scrollHeight;//document.body.clientHeight;
-				var popWindowHeight = bodyHeight;
+            if (visibleBody > bodyHeight) {
+                popWindowHeight = visibleBody;
+            }
+            //alert(document.body.scrollHeight)
+            //console.log(visibleBody , bodyHeight , document.body.scrollHeight)
 
-				if(visibleBody > bodyHeight){
-					popWindowHeight = visibleBody;
-				}
-				//alert(document.body.scrollHeight)
-				//console.log(visibleBody , bodyHeight , document.body.scrollHeight)
+            $guiPopupWindow.css({
+                'height': popWindowHeight
+            });
 
-				$guiPopupWindow.css({
-					'height': popWindowHeight
-				});
+            $guiPopupWindowBg.css({
+                'height': popWindowHeight
+            });
 
-				$guiPopupWindowBg.css({
-					'height': popWindowHeight
-				});
+            $guiPopupCloseBtn.text(closeText);
+        },
+        _eventHandler: function () {
 
-				$guiPopupCloseBtn.text(this.defaults.closeBtn.text);
-			},
-			_eventHandler : function(){
+            var that = this,
+            	thatPopup = that.popup;
 
-				var that = this;
-				var $guiPopupCloseBtn = $('.' + this.defaults.closeBtnWrapperClass);
+            var $guiPopupCloseBtn = $(thatPopup).find('.gui-popup-closebtn'),
+            	$guiPopupWindow = $(thatPopup).find('.gui-popup-window'),
+                $guiPopupContent = $(thatPopup).find('.gui-popup-content'),
+                $regetGuiPopupCloseBtn = $(thatPopup).find('.gui-popup-closebtn'),
+            	$guiPopupContentNode = $(thatPopup).find('.gui-popup-content-node');
 
-				var $guiPopupWindow = $('.' + this.defaults.mainWrapperClass);
-				var $guiPopupContent = $('.' + this.defaults.contentWrapperClass);
-				var $regetGuiPopupCloseBtn = $('.' + this.defaults.closeBtnWrapperClass);
-				var $guiPopupContentNode = $('.' + this.defaults.contentNodeClass);
+            $(this.obj).click(function () {
+                that._setAttributes();
+                //var dataurl = $guiPopupBtn.attr('data-url');
+                $guiPopupWindow.fadeIn(that.defaults.animationDuration);
+                //$guiPopupContentNode.html(that.defaults.contentNodes.text);
+                $guiPopupContentNode[that.defaults.contentNodes.html ? 'html' : 'text'](that.defaults.contentNodes.contents);
 
-				$(this.obj).click(function () {
-					that._setAttributes();
-					//var dataurl = $guiPopupBtn.attr('data-url');
-					$guiPopupWindow.fadeIn(that.defaults.animationDuration);
-					//$guiPopupContentNode.html(that.defaults.contentNodes.text);
-					$guiPopupContentNode[that.defaults.contentNodes.html ? 'html' : 'text'](that.defaults.contentNodes.contents);
+            });
+            $regetGuiPopupCloseBtn.on('click.guiPopup.close',function () {
+                $guiPopupWindow.fadeOut(that.defaults.animationDuration);
+            });
+        },
+        close:function(){
+        	$(this.popup).find('.gui-popup-window').fadeOut();
+        }
+    }
 
-				});
-				$regetGuiPopupCloseBtn.click(function () {
-					$guiPopupWindow.fadeOut();
-				});
-			}
-		}
+    $.fn.guiPopup = function (option) {
+    	return this.each(function(){
 
-		/*var defaults = {
-			animationDuration: 500,
-			bgcolor: 'rgba(0,0,0,0.7)',
-			mainWrapperClass: 'gui-popup-window',
-			contentWrapperClass: 'gui-popup-content',
-			contentNodeClass: 'gui-popup-content-node',
-			closeBtnWrapperClass: 'gui-popup-closebtn',
-			mainBgClass: 'gui-popup-bg',
-			selector: '.',
-			contentNodes: {
-				text: 'JavaScript expressions can be evaluated as values inside .less files. We recommend using caution with this feature as the LESS will not be compilable by ports and it makes the LESS harder to maintain. If possible, try to think of a function that can be added to achieve the same purpose and ask for it on github. We have plans to allow expanding the default functions available. However, if you still want to use JavaScript in .less, this is done by wrapping the expression with back-ticks:'
-			},
-			closeBtn: {
-				value: 'X',
-			}
-		};
+    		var data = $(this).data('guiPopup');
+    		if(!$(this).data('guiPopup')) {
+    		
+    			$(this).data('guiPopup', data = new Module(this,option));
 
-		//options = $.extend({}, defaults, options);
+    		}
 
-		function initEach() {
-			var $guiPopupBtn = $(this);
+    		if(typeof option == 'string') data[option]();
+    	});
+    }
 
-			var $guiPopupWindow = $(options.selector + options.mainWrapperClass);
+    $.fn.guiPopup.defaults = {
+        animationDuration: 500,
+        mainWrapperClass: 'gui-popup-window',
+        contentWrapperClass: 'gui-popup-content',
+        contentNodeClass: 'gui-popup-content-node',
+        closeBtnWrapperClass: 'gui-popup-closebtn',
+        mainBgClass: 'gui-popup-bg',
+        wrapper: 'body',
+        contentNodes: {
+            html: false,
+            contents: 'JavaScript expressions can be evaluated as values inside .less files. We recommend using caution with this feature as the LESS will not be compilable by ports and it makes the LESS harder to maintain. If possible, try to think of a function that can be added to achieve the same purpose and ask for it on github. We have plans to allow expanding the default functions available. However, if you still want to use JavaScript in .less, this is done by wrapping the expression with back-ticks:'
+        },
+        closeBtn: {
+            text: 'X'
+        }
+    };
 
-			//$("body").css({"position":"relative"});
-
-			if ($guiPopupWindow.length === 0) {
-				$('<div class="' + options.mainWrapperClass + '">' +
-					'<div class="' + options.contentWrapperClass + '">' +
-					'<b class="' + options.closeBtnWrapperClass + '"></b>' +
-					'<div class="' + options.contentNodeClass + '"></div>' +
-					'</div>' +
-					'<div class="'+ options.mainBgClass +'"></div>' +
-					'</div>').appendTo($('body'));
-
-				$guiPopupWindow = $(options.selector + options.mainWrapperClass);
-				var $guiPopupContent = $(options.selector + options.contentWrapperClass),
-					$guiPopupCloseBtn = $(options.selector + options.closeBtnWrapperClass),
-					$guiPopupWindowBg = $(options.selector + options.mainBgClass);
-
-				var visibleBody = document.documentElement.clientHeight;
-				var bodyHeight = document.body.clientHeight;
-				var popWindowHeight = bodyHeight;
-
-				if(visibleBody > bodyHeight){
-					popWindowHeight = visibleBody;
-				}
-
-				$guiPopupWindow.css({
-					'height': popWindowHeight//$("body")[0].scrollHeight,//document.documentElement.scrollTop
-				});
-				
-				$guiPopupContent.css({
-
-				});
-				//$(".gui-popup-bg").css('height',$("body")[0].scrollHeight)
-				$guiPopupWindowBg.css({
-					'height': popWindowHeight
-				});
-
-				$guiPopupCloseBtn.css({
-					
-				})
-					.text(options.closeBtn.value);
-			}
-
-			$guiPopupWindow = $(options.selector + options.mainWrapperClass);
-			//$guiPopupContent = $(options.selector + options.contentWrapperClass),
-			var $regetGuiPopupCloseBtn = $(options.selector + options.closeBtnWrapperClass);
-			var $guiPopupContentNode = $(options.selector + options.contentNodeClass);
-
-			$guiPopupBtn.click(function () {
-				//var dataurl = $guiPopupBtn.attr('data-url');
-				$guiPopupWindow.fadeIn(options.animationDuration);
-				$guiPopupContentNode.html(options.contentNodes.text);
-
-			});
-			$regetGuiPopupCloseBtn.click(function () {
-				$guiPopupWindow.fadeOut();
-			});
-		}
-		return this.each(initEach);
-	};*/
-
-	$.fn.guiPopup.defaults = {
-		animationDuration: 500,
-		mainWrapperClass: 'gui-popup-window',
-		contentWrapperClass: 'gui-popup-content',
-		contentNodeClass: 'gui-popup-content-node',
-		closeBtnWrapperClass: 'gui-popup-closebtn',
-		mainBgClass: 'gui-popup-bg',
-		wrapper:'body',
-		contentNodes: {
-			html:false,
-			contents: 'JavaScript expressions can be evaluated as values inside .less files. We recommend using caution with this feature as the LESS will not be compilable by ports and it makes the LESS harder to maintain. If possible, try to think of a function that can be added to achieve the same purpose and ask for it on github. We have plans to allow expanding the default functions available. However, if you still want to use JavaScript in .less, this is done by wrapping the expression with back-ticks:'
-		},
-		closeBtn: {
-			text: 'X'
-		}
-	};
-
-	$.fn.guiPopup.noConflict = function () {
-		$.fn.guiPopup = old;
-		return this;
-	};
+    $.fn.guiPopup.noConflict = function () {
+        $.fn.guiPopup = old;
+        return this;
+    };
 
 })(window);
 
@@ -1917,7 +1868,7 @@ if (!jQuery) { throw new Error("GUI requires jQuery") }
         return this;
     };
 
-})(window);
+})(window,undefined);
 /* ========================================================================
  * GUI: breadcrumb.js v0.1.0
  * http://www.gui.guoyao.me/

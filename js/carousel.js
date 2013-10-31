@@ -228,4 +228,4 @@
         return this;
     };
 
-})(window);
+})(window,undefined);

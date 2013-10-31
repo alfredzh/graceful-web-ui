@@ -43,13 +43,28 @@
                 $guiNav.addClass(option.styleName);
             }
 
-            $guiNav.find("li").mouseenter(function () {
+            /*$guiNav.find("li").mouseenter(function () {
                 var $navItem = $(this),
                     $$subMenu = $navItem.children("ul");
                 $$subMenu.css("left", (isVertical || !$navItem.parent().hasClass("gui-nav")) ? $navItem.width() : 0);
                 if (option.itemFadeIn) {
                     $$subMenu.css("opacity", 0).animate({opacity: 1}, option.animationDuration);
                 }
+            });*/
+
+            //$navItem.children("ul").css("left", (isVertical || !$navItem.parent().hasClass("gui-nav")) ? $navItem.width() : 0);
+
+            $guiNav.find("li").hover(function () {
+                var $navItem = $(this),
+                    $$subMenu = $navItem.children("ul");
+                $$subMenu.css("left", (isVertical || $(this).parent()[0] != $guiNav[0]) ? $navItem.outerWidth() : 0);
+                //if (option.itemFadeIn) {
+                    $$subMenu.stop(false,true).fadeIn(option.animationDuration);
+                //}
+            },function(){
+                var $navItem = $(this),
+                    $$subMenu = $navItem.children("ul");
+                $$subMenu.stop(false,true).fadeOut(option.animationDuration);
             });
         });
 
