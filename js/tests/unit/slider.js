@@ -2,7 +2,7 @@ $(function () {
 
     var $ = window.jQuery;
 
-    module("slider [global]");
+    module("slider");
 
     test("should provide no conflict", function () {
         var guiSlider = $.fn.guiSlider.noConflict();

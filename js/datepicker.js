@@ -66,14 +66,19 @@
                 })
         },
         _getInputProp: function () {
-            var inputNode = $(this.obj) || undefined,
-                prop = [];
-            if (inputNode) {
-                prop.left = inputNode.offset().left,
-                    prop.top = inputNode.offset().top,
-                    prop.h = parseInt(inputNode.outerHeight(), 10),
-                    prop.w = parseInt(inputNode.outerWidth(), 10);
+            var inputNode = $(this.obj),// || undefined,
+                prop = [],
+                inputParent = inputNode.next('.gui-date-picker').parent();
+
+            if(inputParent.css("position") == "static"){
+                inputParent.css("position","relative");
             }
+
+            prop.left = inputNode.offset().left - inputParent.offset().left,
+            prop.top = inputNode.offset().top - inputParent.offset().top;
+            //prop.h = parseInt(inputNode.outerHeight(), 10),
+            //prop.w = parseInt(inputNode.outerWidth(), 10);
+
             return prop;
         },
         _setCalender: function () {
