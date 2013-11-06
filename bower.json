@@ -1,12 +1,12 @@
 {
     "name": "gui",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "main": ["./dist/js/gui.js", "./dist/css/gui.css"],
     "ignore": [
         "**/.*"
     ],
     "dependencies": {
-        "jquery": "~1.8.3"
+        "jquery": "<2.0.0"
     },
     "devDependencies": {
         "qunit": "~1.12.0",
